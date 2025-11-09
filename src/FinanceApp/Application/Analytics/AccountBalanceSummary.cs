@@ -1,3 +1,3 @@
 namespace FinanceApp.Application.Analytics;
 
-public record AccountBalanceSummary(Guid AccountId, string AccountName, decimal Balance);
+public record AccountBalanceSummary(int AccountId, string AccountName, decimal Balance);

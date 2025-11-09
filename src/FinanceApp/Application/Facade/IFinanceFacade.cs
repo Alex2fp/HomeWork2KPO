@@ -9,24 +9,24 @@ public interface IFinanceFacade
 {
     IReadOnlyCollection<BankAccount> GetAccounts();
     BankAccount CreateAccount(string name, string currency);
-    void RenameAccount(Guid id, string newName);
-    void DeleteAccount(Guid id);
+    void RenameAccount(int id, string newName);
+    void DeleteAccount(int id);
 
     IReadOnlyCollection<Category> GetCategories();
     Category CreateCategory(string name, CategoryType type);
-    void UpdateCategory(Guid id, string name, CategoryType type);
-    void DeleteCategory(Guid id);
+    void UpdateCategory(int id, string name, CategoryType type);
+    void DeleteCategory(int id);
 
-    IReadOnlyCollection<Operation> GetOperations(Guid accountId);
-    Operation CreateOperation(Guid accountId, Guid categoryId, OperationType type, decimal amount, DateOnly date, string description);
-    void DeleteOperation(Guid id);
+    IReadOnlyCollection<Operation> GetOperations(int accountId);
+    Operation CreateOperation(int accountId, int categoryId, OperationType type, decimal amount, DateOnly date, string description);
+    void DeleteOperation(int id);
 
-    AccountBalanceSummary GetAccountBalance(Guid accountId);
-    IncomeExpenseSummary GetIncomeExpense(Guid accountId, DateOnly? from = null, DateOnly? to = null);
-    IReadOnlyCollection<CategoryTotal> GetCategoryTotals(Guid accountId, DateOnly? from = null, DateOnly? to = null);
+    AccountBalanceSummary GetAccountBalance(int accountId);
+    IncomeExpenseSummary GetIncomeExpense(int accountId, DateOnly? from = null, DateOnly? to = null);
+    IReadOnlyCollection<CategoryTotal> GetCategoryTotals(int accountId, DateOnly? from = null, DateOnly? to = null);
 
-    void RecalculateBalance(Guid accountId);
+    void RecalculateBalance(int accountId);
 
-    FinanceDataSnapshot Import(string format, string content, bool apply = false);
-    string Export(string format);
+    FinanceDataSnapshot ImportFromFile(string path, bool apply = false);
+    void ExportToFile(string path);
 }

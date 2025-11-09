@@ -3,9 +3,9 @@ namespace FinanceApp.Domain;
 public class Operation : IExportable
 {
     public Operation(
-        Guid id,
-        Guid accountId,
-        Guid categoryId,
+        int id,
+        int accountId,
+        int categoryId,
         OperationType type,
         decimal amount,
         DateOnly date,
@@ -25,9 +25,9 @@ public class Operation : IExportable
         Description = description?.Trim() ?? string.Empty;
     }
 
-    public Guid Id { get; }
-    public Guid AccountId { get; }
-    public Guid CategoryId { get; }
+    public int Id { get; }
+    public int AccountId { get; }
+    public int CategoryId { get; }
     public OperationType Type { get; }
     public decimal Amount { get; }
     public DateOnly Date { get; }

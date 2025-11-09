@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -21,7 +22,13 @@ public class JsonFinanceDataImporter : FinanceDataImporter
         return new RawFinanceData(
             model.Accounts.Select(a => new RawAccount(a.Name, a.Currency)).ToArray(),
             model.Categories.Select(c => new RawCategory(c.Name, c.Type)).ToArray(),
-            model.Operations.Select(o => new RawOperation(o.Account, o.Category, o.Type, o.Amount, o.Date, o.Description)).ToArray());
+            model.Operations.Select(o => new RawOperation(
+                o.Account,
+                o.Category,
+                o.Type,
+                o.Amount,
+                DateOnly.ParseExact(o.Date, "dd-MM-yyyy", CultureInfo.InvariantCulture),
+                o.Description)).ToArray());
     }
 
     private record JsonFinanceModel(
@@ -33,5 +40,5 @@ public class JsonFinanceDataImporter : FinanceDataImporter
 
     private record JsonCategoryModel(string Name, CategoryType Type);
 
-    private record JsonOperationModel(string Account, string Category, OperationType Type, decimal Amount, DateOnly Date, string Description);
+    private record JsonOperationModel(string Account, string Category, OperationType Type, decimal Amount, string Date, string? Description);
 }

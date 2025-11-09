@@ -68,7 +68,7 @@ public class YamlFinanceDataImporter : FinanceDataImporter
         var rawCategories = categories
             .Select(c => new RawCategory(
                 c.GetValueOrDefault("name", "Unknown"),
-                Enum.Parse<CategoryType>(c.GetValueOrDefault("type", nameof(CategoryType.Universal)), true)))
+                Enum.Parse<CategoryType>(c.GetValueOrDefault("type", nameof(CategoryType.Expense)), true)))
             .ToArray();
         var rawOperations = operations
             .Select(o => new RawOperation(
@@ -76,7 +76,10 @@ public class YamlFinanceDataImporter : FinanceDataImporter
                 o.GetValueOrDefault("category", string.Empty),
                 Enum.Parse<OperationType>(o.GetValueOrDefault("type", nameof(OperationType.Expense)), true),
                 decimal.Parse(o.GetValueOrDefault("amount", "0"), CultureInfo.InvariantCulture),
-                DateOnly.Parse(o.GetValueOrDefault("date", DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), CultureInfo.InvariantCulture),
+                DateOnly.ParseExact(
+                    o.GetValueOrDefault("date", DateOnly.FromDateTime(DateTime.Today).ToString("dd-MM-yyyy")),
+                    "dd-MM-yyyy",
+                    CultureInfo.InvariantCulture),
                 o.GetValueOrDefault("description", string.Empty)))
             .ToArray();
 

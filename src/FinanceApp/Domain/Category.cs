@@ -2,7 +2,7 @@ namespace FinanceApp.Domain;
 
 public class Category : IExportable
 {
-    public Category(Guid id, string name, CategoryType type)
+    public Category(int id, string name, CategoryType type)
     {
         Id = id;
         Name = !string.IsNullOrWhiteSpace(name)
@@ -11,7 +11,7 @@ public class Category : IExportable
         Type = type;
     }
 
-    public Guid Id { get; }
+    public int Id { get; }
     public string Name { get; private set; }
     public CategoryType Type { get; private set; }
 

@@ -34,42 +34,42 @@ public class FinanceFacade : IFinanceFacade
 
     public BankAccount CreateAccount(string name, string currency) => _repository.AddAccount(name, currency);
 
-    public void RenameAccount(Guid id, string newName) => _repository.RenameAccount(id, newName);
+    public void RenameAccount(int id, string newName) => _repository.RenameAccount(id, newName);
 
-    public void DeleteAccount(Guid id) => _repository.RemoveAccount(id);
+    public void DeleteAccount(int id) => _repository.RemoveAccount(id);
 
     public IReadOnlyCollection<Category> GetCategories() => _repository.GetCategories();
 
     public Category CreateCategory(string name, CategoryType type) => _repository.AddCategory(name, type);
 
-    public void UpdateCategory(Guid id, string name, CategoryType type) => _repository.UpdateCategory(id, name, type);
+    public void UpdateCategory(int id, string name, CategoryType type) => _repository.UpdateCategory(id, name, type);
 
-    public void DeleteCategory(Guid id) => _repository.RemoveCategory(id);
+    public void DeleteCategory(int id) => _repository.RemoveCategory(id);
 
-    public IReadOnlyCollection<Operation> GetOperations(Guid accountId) => _repository.GetOperationsForAccount(accountId);
+    public IReadOnlyCollection<Operation> GetOperations(int accountId) => _repository.GetOperationsForAccount(accountId);
 
-    public Operation CreateOperation(Guid accountId, Guid categoryId, OperationType type, decimal amount, DateOnly date, string description)
+    public Operation CreateOperation(int accountId, int categoryId, OperationType type, decimal amount, DateOnly date, string description)
         => _repository.AddOperation(accountId, categoryId, type, amount, date, description);
 
-    public void DeleteOperation(Guid id) => _repository.RemoveOperation(id);
+    public void DeleteOperation(int id) => _repository.RemoveOperation(id);
 
-    public AccountBalanceSummary GetAccountBalance(Guid accountId) => _analyticsService.GetAccountBalance(accountId);
+    public AccountBalanceSummary GetAccountBalance(int accountId) => _analyticsService.GetAccountBalance(accountId);
 
-    public IncomeExpenseSummary GetIncomeExpense(Guid accountId, DateOnly? from = null, DateOnly? to = null)
+    public IncomeExpenseSummary GetIncomeExpense(int accountId, DateOnly? from = null, DateOnly? to = null)
         => _analyticsService.GetIncomeExpense(accountId, from, to);
 
-    public IReadOnlyCollection<CategoryTotal> GetCategoryTotals(Guid accountId, DateOnly? from = null, DateOnly? to = null)
+    public IReadOnlyCollection<CategoryTotal> GetCategoryTotals(int accountId, DateOnly? from = null, DateOnly? to = null)
         => _analyticsService.GetTotalsByCategory(accountId, from, to);
 
-    public void RecalculateBalance(Guid accountId)
+    public void RecalculateBalance(int accountId)
     {
         var command = _commandFactory.CreateRecalculateBalance(accountId);
         command.Execute();
     }
 
-    public FinanceDataSnapshot Import(string format, string content, bool apply = false)
+    public FinanceDataSnapshot ImportFromFile(string path, bool apply = false)
     {
-        var snapshot = _importService.Import(format, content);
+        var snapshot = _importService.ImportFromFile(path);
         if (apply)
         {
             _importService.Apply(snapshot);
@@ -78,5 +78,5 @@ public class FinanceFacade : IFinanceFacade
         return snapshot;
     }
 
-    public string Export(string format) => _exportService.Export(format);
+    public void ExportToFile(string path) => _exportService.ExportToFile(path);
 }

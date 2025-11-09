@@ -12,7 +12,16 @@ public class JsonExportVisitor : CollectingExportVisitor
         {
             accounts = Accounts.OrderBy(a => a.Name).Select(a => new { a.Id, a.Name, a.Currency, a.Balance }),
             categories = Categories.OrderBy(c => c.Name).Select(c => new { c.Id, c.Name, c.Type }),
-            operations = Operations.OrderBy(o => o.Date).Select(o => new { o.Id, o.AccountId, o.CategoryId, o.Type, o.Amount, o.Date, o.Description })
+            operations = Operations.OrderBy(o => o.Date).Select(o => new
+            {
+                o.Id,
+                o.AccountId,
+                o.CategoryId,
+                o.Type,
+                o.Amount,
+                date = o.Date.ToString("dd-MM-yyyy"),
+                o.Description
+            })
         };
 
         var options = new JsonSerializerOptions

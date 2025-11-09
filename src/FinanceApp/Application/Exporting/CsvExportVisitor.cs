@@ -27,13 +27,13 @@ public class CsvExportVisitor : CollectingExportVisitor
         builder.AppendLine("[Operations]");
         foreach (var operation in Operations.OrderBy(o => o.Date))
         {
-            builder.AppendLine($"{GetAccountName(operation.AccountId)},{GetCategoryName(operation.CategoryId)},{operation.Type},{operation.Amount.ToString(CultureInfo.InvariantCulture)},{operation.Date:yyyy-MM-dd},{operation.Description}");
+            builder.AppendLine($"{GetAccountName(operation.AccountId)},{GetCategoryName(operation.CategoryId)},{operation.Type},{operation.Amount.ToString(CultureInfo.InvariantCulture)},{operation.Date:dd-MM-yyyy},{operation.Description}");
         }
 
         return builder.ToString();
     }
 
-    private string GetAccountName(Guid accountId) => Accounts.First(a => a.Id == accountId).Name;
+    private string GetAccountName(int accountId) => Accounts.First(a => a.Id == accountId).Name;
 
-    private string GetCategoryName(Guid categoryId) => Categories.First(c => c.Id == categoryId).Name;
+    private string GetCategoryName(int categoryId) => Categories.First(c => c.Id == categoryId).Name;
 }

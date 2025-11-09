@@ -1,11 +1,10 @@
-using System;
 using FinanceApp.Application.Repositories;
 
 namespace FinanceApp.Application.Commands;
 
 public interface ICommandFactory
 {
-    ICommand CreateRecalculateBalance(Guid accountId);
+    ICommand CreateRecalculateBalance(int accountId);
 }
 
 public class CommandFactory : ICommandFactory
@@ -17,5 +16,5 @@ public class CommandFactory : ICommandFactory
         _repository = repository;
     }
 
-    public ICommand CreateRecalculateBalance(Guid accountId) => new RecalculateBalanceCommand(_repository, accountId);
+    public ICommand CreateRecalculateBalance(int accountId) => new RecalculateBalanceCommand(_repository, accountId);
 }
