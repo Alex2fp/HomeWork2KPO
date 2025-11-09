@@ -57,7 +57,7 @@ dotnet run --project src/FinanceApp/FinanceApp.csproj
 
 Типы категорий и операций — `Income` или `Expense`. Баланс и суммы записываются через точку.
 
-### JSON (.json)
+### JSON ('.json')
 
 Структура файла:
 
