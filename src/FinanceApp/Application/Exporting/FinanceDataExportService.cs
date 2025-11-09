@@ -7,7 +7,7 @@ namespace FinanceApp.Application.Exporting;
 
 public interface IFinanceDataExportService
 {
-    void ExportToFile(string path);
+    string Export(string folderPath, string format);
 }
 
 public class FinanceDataExportService : IFinanceDataExportService
@@ -19,9 +19,33 @@ public class FinanceDataExportService : IFinanceDataExportService
         _repository = repository;
     }
 
-    public void ExportToFile(string path)
+    public string Export(string folderPath, string format)
     {
-        var format = GetFormatFromPath(path);
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            throw new ArgumentException("Путь к папке не может быть пустым", nameof(folderPath));
+        }
+
+        var normalizedFormat = NormalizeFormat(format);
+        var extension = GetExtension(normalizedFormat);
+        var baseFileName = $"finance_export_{DateTime.Now:yyyyMMdd_HHmmss}";
+        var directoryPath = Path.GetFullPath(folderPath);
+        Directory.CreateDirectory(directoryPath);
+
+        var filePath = Path.Combine(directoryPath, $"{baseFileName}.{extension}");
+        var suffix = 1;
+        while (File.Exists(filePath))
+        {
+            filePath = Path.Combine(directoryPath, $"{baseFileName}_{suffix}.{extension}");
+            suffix++;
+        }
+
+        WriteToFile(filePath, normalizedFormat);
+        return filePath;
+    }
+
+    private void WriteToFile(string path, string format)
+    {
         var visitor = CreateVisitor(format);
 
         foreach (var account in _repository.GetAccounts())
@@ -40,40 +64,34 @@ public class FinanceDataExportService : IFinanceDataExportService
         }
 
         var content = visitor.Build();
-        var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrWhiteSpace(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
         File.WriteAllText(path, content, Encoding.UTF8);
     }
 
-    private CollectingExportVisitor CreateVisitor(string format) => format.ToLowerInvariant() switch
+    private static CollectingExportVisitor CreateVisitor(string format) => format switch
     {
         "csv" => new CsvExportVisitor(),
         "json" => new JsonExportVisitor(),
         "yaml" => new YamlExportVisitor(),
-        _ => throw new NotSupportedException($"Format '{format}' is not supported")
+        _ => throw new NotSupportedException($"Формат '{format}' не поддерживается")
     };
 
-    private static string GetFormatFromPath(string path)
+    private static string NormalizeFormat(string format)
     {
-        var extension = Path.GetExtension(path);
-        if (string.IsNullOrWhiteSpace(extension))
-        {
-            throw new NotSupportedException("Не удалось определить формат файла");
-        }
-
-        var format = extension.TrimStart('.').ToLowerInvariant();
-        return format switch
+        var normalized = (format ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized switch
         {
             "csv" => "csv",
-            "json" => "json",
-            "jsony" => "json",
-            "yaml" => "yaml",
-            "yml" => "yaml",
-            _ => throw new NotSupportedException($"Формат '{extension}' не поддерживается")
+            "json" or "jsony" => "json",
+            "yaml" or "yml" => "yaml",
+            _ => throw new NotSupportedException("Укажите формат из списка: csv, json или yaml")
         };
     }
+
+    private static string GetExtension(string format) => format switch
+    {
+        "csv" => "csv",
+        "json" => "json",
+        "yaml" => "yaml",
+        _ => format
+    };
 }

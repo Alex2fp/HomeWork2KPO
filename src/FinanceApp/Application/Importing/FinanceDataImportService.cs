@@ -31,7 +31,7 @@ public class FinanceDataImportService : IFinanceDataImportService
 
     public void Apply(FinanceDataSnapshot snapshot)
     {
-        _repository.ReplaceWithSnapshot(snapshot);
+        _repository.MergeWithSnapshot(snapshot);
     }
 
     private FinanceDataSnapshot Import(string format, string content)

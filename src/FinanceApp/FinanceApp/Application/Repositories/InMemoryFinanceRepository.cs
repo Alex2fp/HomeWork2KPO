@@ -24,7 +24,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_accounts.TryGetValue(id, out var account))
         {
-            throw new KeyNotFoundException($"Account {id} not found");
+            throw new KeyNotFoundException($"Счет с идентификатором {id} не найден");
         }
 
         return account.Clone();
@@ -49,7 +49,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_accounts.Remove(id))
         {
-            throw new KeyNotFoundException($"Account {id} not found");
+            throw new KeyNotFoundException($"Счет с идентификатором {id} не найден");
         }
 
         foreach (var operation in _operations.Values.Where(o => o.AccountId == id).ToList())
@@ -67,7 +67,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_categories.TryGetValue(id, out var category))
         {
-            throw new KeyNotFoundException($"Category {id} not found");
+            throw new KeyNotFoundException($"Категория с идентификатором {id} не найдена");
         }
 
         return CloneCategory(category);
@@ -93,7 +93,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_categories.Remove(id))
         {
-            throw new KeyNotFoundException($"Category {id} not found");
+            throw new KeyNotFoundException($"Категория с идентификатором {id} не найдена");
         }
 
         foreach (var operation in _operations.Values.Where(o => o.CategoryId == id).ToList())
@@ -131,14 +131,13 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_operations.TryGetValue(operationId, out var operation))
         {
-            throw new KeyNotFoundException($"Operation {operationId} not found");
+            throw new KeyNotFoundException($"Операция с идентификатором {operationId} не найдена");
         }
 
         var account = GetInternalAccount(operation.AccountId);
         account.RemoveOperation(operation);
         _operations.Remove(operationId);
     }
-
 
     public void ResetAccountOperations(int accountId)
     {
@@ -183,11 +182,84 @@ public class InMemoryFinanceRepository : IFinanceRepository
         }
     }
 
+    public void MergeWithSnapshot(FinanceDataSnapshot snapshot)
+    {
+        if (snapshot is null)
+        {
+            throw new ArgumentNullException(nameof(snapshot));
+        }
+
+        foreach (var account in snapshot.Accounts)
+        {
+            if (_accounts.TryGetValue(account.Id, out var existingAccount))
+            {
+                EnsureUniqueAccountName(account.Name, account.Id);
+                existingAccount.Rename(account.Name);
+            }
+            else
+            {
+                EnsureUniqueAccountName(account.Name);
+                _accounts[account.Id] = new BankAccount(account.Id, account.Name, account.Currency);
+            }
+
+            _nextAccountId = Math.Max(_nextAccountId, account.Id + 1);
+        }
+
+        foreach (var category in snapshot.Categories)
+        {
+            if (_categories.TryGetValue(category.Id, out var existingCategory))
+            {
+                EnsureUniqueCategoryName(category.Name, category.Id);
+                existingCategory.Rename(category.Name);
+                existingCategory.ChangeType(category.Type);
+            }
+            else
+            {
+                EnsureUniqueCategoryName(category.Name);
+                _categories[category.Id] = new Category(category.Id, category.Name, category.Type);
+            }
+
+            _nextCategoryId = Math.Max(_nextCategoryId, category.Id + 1);
+        }
+
+        foreach (var operation in snapshot.Operations
+                     .OrderBy(o => o.Date)
+                     .ThenBy(o => o.Id))
+        {
+            if (_operations.ContainsKey(operation.Id))
+            {
+                continue;
+            }
+
+            var account = GetInternalAccount(operation.AccountId);
+            var category = GetInternalCategory(operation.CategoryId);
+            ValidateCategoryCompatibility(operation.Type, category);
+
+            var op = new Operation(
+                operation.Id,
+                operation.AccountId,
+                operation.CategoryId,
+                operation.Type,
+                operation.Amount,
+                operation.Date,
+                operation.Description);
+
+            _operations[op.Id] = op;
+
+            if (!account.OperationIds.Contains(op.Id))
+            {
+                account.RegisterOperation(op);
+            }
+
+            _nextOperationId = Math.Max(_nextOperationId, op.Id + 1);
+        }
+    }
+
     private BankAccount GetInternalAccount(int id)
     {
         if (!_accounts.TryGetValue(id, out var account))
         {
-            throw new KeyNotFoundException($"Account {id} not found");
+            throw new KeyNotFoundException($"Счет с идентификатором {id} не найден");
         }
 
         return account;
@@ -197,7 +269,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
     {
         if (!_categories.TryGetValue(id, out var category))
         {
-            throw new KeyNotFoundException($"Category {id} not found");
+            throw new KeyNotFoundException($"Категория с идентификатором {id} не найдена");
         }
 
         return category;
@@ -208,7 +280,8 @@ public class InMemoryFinanceRepository : IFinanceRepository
         if ((type == OperationType.Income && category.Type != CategoryType.Income) ||
             (type == OperationType.Expense && category.Type != CategoryType.Expense))
         {
-            throw new InvalidOperationException($"Category '{category.Name}' cannot be used for {type.ToString().ToLowerInvariant()} operations");
+            var operationName = type == OperationType.Income ? "доходными" : "расходными";
+            throw new InvalidOperationException($"Категорию '{category.Name}' нельзя использовать для {operationName} операций");
         }
     }
 
@@ -217,7 +290,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         var normalized = name.Trim().ToUpperInvariant();
         if (_accounts.Values.Any(a => a.Name.Trim().ToUpperInvariant() == normalized && a.Id != id))
         {
-            throw new InvalidOperationException($"Account with name '{name}' already exists");
+            throw new InvalidOperationException($"Счет с названием '{name}' уже существует");
         }
     }
 
@@ -226,7 +299,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         var normalized = name.Trim().ToUpperInvariant();
         if (_categories.Values.Any(c => c.Name.Trim().ToUpperInvariant() == normalized && c.Id != id))
         {
-            throw new InvalidOperationException($"Category with name '{name}' already exists");
+            throw new InvalidOperationException($"Категория с названием '{name}' уже существует");
         }
     }
 

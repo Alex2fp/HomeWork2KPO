@@ -7,7 +7,7 @@ public class Category : IExportable
         Id = id;
         Name = !string.IsNullOrWhiteSpace(name)
             ? name
-            : throw new ArgumentException("Category name cannot be empty", nameof(name));
+            : throw new ArgumentException("Название категории не может быть пустым", nameof(name));
         Type = type;
     }
 
@@ -19,7 +19,7 @@ public class Category : IExportable
     {
         if (string.IsNullOrWhiteSpace(newName))
         {
-            throw new ArgumentException("Category name cannot be empty", nameof(newName));
+            throw new ArgumentException("Название категории не может быть пустым", nameof(newName));
         }
 
         Name = newName.Trim();
