@@ -28,5 +28,5 @@ public interface IFinanceFacade
     void RecalculateBalance(int accountId);
 
     FinanceDataSnapshot ImportFromFile(string path, bool apply = false);
-    void ExportToFile(string path);
+    string ExportData(string folderPath, string format);
 }

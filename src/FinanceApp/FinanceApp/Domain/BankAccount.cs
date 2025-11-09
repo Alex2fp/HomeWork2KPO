@@ -16,12 +16,12 @@ public class BankAccount : IExportable
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("Account name cannot be empty", nameof(name));
+            throw new ArgumentException("Название счета не может быть пустым", nameof(name));
         }
 
         if (string.IsNullOrWhiteSpace(currency))
         {
-            throw new ArgumentException("Currency cannot be empty", nameof(currency));
+            throw new ArgumentException("Валюта не может быть пустой", nameof(currency));
         }
 
         Id = id;
@@ -41,7 +41,7 @@ public class BankAccount : IExportable
     {
         if (string.IsNullOrWhiteSpace(newName))
         {
-            throw new ArgumentException("Account name cannot be empty", nameof(newName));
+            throw new ArgumentException("Название счета не может быть пустым", nameof(newName));
         }
 
         Name = newName.Trim();
@@ -51,7 +51,7 @@ public class BankAccount : IExportable
     {
         if (operation.AccountId != Id)
         {
-            throw new InvalidOperationException("Operation does not belong to this account");
+            throw new InvalidOperationException("Операция не принадлежит выбранному счету");
         }
 
         _operationIds.Add(operation.Id);

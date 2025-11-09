@@ -168,7 +168,7 @@ public class ConsoleApplication
         {
             case "1":
                 var name = ReadRequiredString("Название: ");
-                var type = ReadCategoryType("Тип (Income/Expense): ");
+                var type = ReadCategoryType("Тип (доход/расход): ");
                 try
                 {
                     _facade.CreateCategory(name, type);
@@ -186,7 +186,7 @@ public class ConsoleApplication
                 }
 
                 var newName = ReadRequiredString("Новое название: ");
-                var newType = ReadCategoryType("Тип (Income/Expense): ");
+                var newType = ReadCategoryType("Тип (доход/расход): ");
                 try
                 {
                     _facade.UpdateCategory(categoryId, newName, newType);
@@ -254,7 +254,8 @@ public class ConsoleApplication
             {
                 var sign = operation.Type == OperationType.Income ? "+" : "-";
                 var description = string.IsNullOrWhiteSpace(operation.Description) ? "(без описания)" : operation.Description;
-                Console.WriteLine($"{operation.Id} | {operation.Date:dd-MM-yyyy} | {operation.Type} | {sign}{operation.Amount:0.##} | {description}");
+                var typeName = TranslateOperationType(operation.Type);
+                Console.WriteLine($"{operation.Id} | {operation.Date:dd-MM-yyyy} | {typeName} | {sign}{operation.Amount:0.##} | {description}");
             }
         }
 
@@ -286,13 +287,16 @@ public class ConsoleApplication
                     break;
                 }
 
-                if (categories.All(c => c.Id != categoryId))
+                var category = categories.FirstOrDefault(c => c.Id == categoryId);
+                if (category is null)
                 {
                     Console.WriteLine("Категория не найдена.");
                     break;
                 }
 
-                var type = ReadOperationType("Тип операции (Income/Expense): ");
+                var type = category.Type == CategoryType.Income
+                    ? OperationType.Income
+                    : OperationType.Expense;
                 var amount = ReadAmount("Сумма: ");
                 var date = ReadDate("Дата (dd-MM-yyyy, пусто для сегодняшней даты): ");
                 Console.Write("Описание: ");
@@ -406,15 +410,21 @@ public class ConsoleApplication
                 continue;
             }
 
+            if (!TryGetFormatFromFileName(path, out _))
+            {
+                Console.WriteLine("Поддерживаются файлы с расширениями .csv, .json, .yaml и .yml.");
+                continue;
+            }
+
             try
             {
                 var snapshot = _facade.ImportFromFile(path, apply: true);
                 Console.WriteLine($"Импортировано {snapshot.Accounts.Count} счетов, {snapshot.Categories.Count} категорий, {snapshot.Operations.Count} операций.");
                 return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Не удалось импортировать данные. Проверьте расширение и содержимое файла и попробуйте снова.");
+                Console.WriteLine($"Не удалось импортировать данные: {ex.Message}");
             }
         }
     }
@@ -423,23 +433,31 @@ public class ConsoleApplication
     {
         while (true)
         {
-            Console.Write("Путь для сохранения (пусто для отмены): ");
-            var path = (Console.ReadLine() ?? string.Empty).Trim();
-            if (string.IsNullOrEmpty(path))
+            Console.Write("Путь к папке для сохранения (пусто для отмены): ");
+            var folder = (Console.ReadLine() ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(folder))
             {
                 Console.WriteLine("Экспорт отменен.");
                 return;
             }
 
+            Console.Write("Формат экспорта (csv/json/yaml): ");
+            var formatInput = Console.ReadLine();
+            if (!TryParseExportFormat(formatInput, out var format))
+            {
+                Console.WriteLine("Некорректный формат. Используйте значения csv, json или yaml.");
+                continue;
+            }
+
             try
             {
-                _facade.ExportToFile(path);
-                Console.WriteLine($"Экспорт завершен. Файл сохранен по пути: {path}");
+                var filePath = _facade.ExportData(folder, format);
+                Console.WriteLine($"Экспорт завершен. Файл сохранен по пути: {filePath}");
                 return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Не удалось выполнить экспорт. Проверьте расширение файла и попробуйте снова.");
+                Console.WriteLine($"Не удалось выполнить экспорт: {ex.Message}");
             }
         }
     }
@@ -491,7 +509,7 @@ public class ConsoleApplication
                 return type;
             }
 
-            Console.WriteLine("Некорректный тип категории. Введите Income или Expense.");
+            Console.WriteLine("Некорректный тип категории. Введите \"доход\" или \"расход\".");
         }
     }
 
@@ -507,40 +525,6 @@ public class ConsoleApplication
         if (normalized is "expense" or "расход")
         {
             type = CategoryType.Expense;
-            return true;
-        }
-
-        type = default;
-        return false;
-    }
-
-    private static OperationType ReadOperationType(string prompt)
-    {
-        while (true)
-        {
-            Console.Write(prompt);
-            var input = Console.ReadLine();
-            if (TryParseOperationType(input, out var type))
-            {
-                return type;
-            }
-
-            Console.WriteLine("Некорректный тип операции. Введите Income или Expense.");
-        }
-    }
-
-    private static bool TryParseOperationType(string? input, out OperationType type)
-    {
-        var normalized = (input ?? string.Empty).Trim().ToLowerInvariant();
-        if (string.IsNullOrEmpty(normalized) || normalized is "income" or "доход")
-        {
-            type = OperationType.Income;
-            return true;
-        }
-
-        if (normalized is "expense" or "расход")
-        {
-            type = OperationType.Expense;
             return true;
         }
 
@@ -603,6 +587,43 @@ public class ConsoleApplication
         }
     }
 
+    private static bool TryGetFormatFromFileName(string path, out string format)
+    {
+        var extension = Path.GetExtension(path);
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            format = string.Empty;
+            return false;
+        }
+
+        return TryParseExportFormat(extension.TrimStart('.'), out format);
+    }
+
+    private static bool TryParseExportFormat(string? input, out string format)
+    {
+        var normalized = (input ?? string.Empty).Trim().ToLowerInvariant();
+        switch (normalized)
+        {
+            case "csv":
+                format = "csv";
+                return true;
+            case "json":
+            case "jsony":
+                format = "json";
+                return true;
+            case "yaml":
+            case "yml":
+                format = "yaml";
+                return true;
+            default:
+                format = string.Empty;
+                return false;
+        }
+    }
+
     private static string TranslateCategoryType(CategoryType type)
         => type == CategoryType.Income ? "Доход" : "Расход";
+
+    private static string TranslateOperationType(OperationType type)
+        => type == OperationType.Income ? "Доход" : "Расход";
 }

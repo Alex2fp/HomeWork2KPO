@@ -24,4 +24,5 @@ public interface IFinanceRepository
 
     void ResetAccountOperations(int accountId);
     void ReplaceWithSnapshot(FinanceDataSnapshot snapshot);
+    void MergeWithSnapshot(FinanceDataSnapshot snapshot);
 }

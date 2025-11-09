@@ -78,5 +78,5 @@ public class FinanceFacade : IFinanceFacade
         return snapshot;
     }
 
-    public void ExportToFile(string path) => _exportService.ExportToFile(path);
+    public string ExportData(string folderPath, string format) => _exportService.Export(folderPath, format);
 }

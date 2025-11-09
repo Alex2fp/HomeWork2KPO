@@ -13,7 +13,7 @@ public class Operation : IExportable
     {
         if (amount <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive");
+            throw new ArgumentOutOfRangeException(nameof(amount), "Сумма операции должна быть положительной");
         }
 
         Id = id;
