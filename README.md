@@ -63,20 +63,20 @@ dotnet run --project src/FinanceApp/FinanceApp.csproj
 
 ```json
 {
-  "accounts": [ { "id": 0, "name": "Наличные", "currency": "RUB", "balance": 0 } ],
-  "categories": [ { "id": 0, "name": "Зарплата", "type": "Income" } ],
+  "accounts": [ { "name": , "currency":  } ],
+  "categories": [ { "name":, "type":  } ],  Например, type "Income"
   "operations": [
     {
-      "id": 0,
-      "accountId": 0,
-      "categoryId": 0,
+      "account": 
+      "category": ,
       "type": "Income",
-      "amount": 1000,
-      "date": "01-01-2024",
-      "description": "Комментарий"
+      "amount":
+      "date": ,
+      "description":
     }
   ]
 }
+
 ```
 
 ### YAML (`.yaml`)
