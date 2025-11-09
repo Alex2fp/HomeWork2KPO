@@ -44,7 +44,7 @@ public class CsvFinanceDataImporter : FinanceDataImporter
                 case "operations":
                     var opType = Enum.Parse<OperationType>(parts[2], ignoreCase: true);
                     var amount = decimal.Parse(parts[3], CultureInfo.InvariantCulture);
-                    var date = DateOnly.Parse(parts[4], CultureInfo.InvariantCulture);
+                    var date = DateOnly.ParseExact(parts[4], "dd-MM-yyyy", CultureInfo.InvariantCulture);
                     var description = parts.Length > 5 ? parts[5] : string.Empty;
                     operations.Add(new RawOperation(parts[0], parts[1], opType, amount, date, description));
                     break;

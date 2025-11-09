@@ -15,7 +15,7 @@ services.AddSingleton<AnalyticsService>();
 services.AddSingleton<IAnalyticsService>(provider =>
 {
     var inner = provider.GetRequiredService<AnalyticsService>();
-    return new AnalyticsTimingDecorator(inner, message => Console.WriteLine($"[METRICS] {message}"));
+    return new AnalyticsTimingDecorator(inner, _ => { });
 });
 services.AddSingleton<ICommandFactory, CommandFactory>();
 services.AddSingleton<IFinanceDataImporterFactory, FinanceDataImporterFactory>();
@@ -31,15 +31,11 @@ app.Run();
 
 static void Seed(IFinanceFacade facade)
 {
-    if (facade.GetAccounts().Count > 0)
+    if (facade.GetCategories().Count > 0)
     {
         return;
     }
 
-    var account = facade.CreateAccount("Наличные", "RUB");
-    var salary = facade.CreateCategory("Зарплата", CategoryType.Income);
-    var groceries = facade.CreateCategory("Продукты", CategoryType.Expense);
-
-    facade.CreateOperation(account.Id, salary.Id, OperationType.Income, 120000m, DateOnly.FromDateTime(DateTime.Today.AddDays(-10)), "Основной доход");
-    facade.CreateOperation(account.Id, groceries.Id, OperationType.Expense, 4500m, DateOnly.FromDateTime(DateTime.Today.AddDays(-5)), "Супермаркет");
+    facade.CreateCategory("Зарплата", CategoryType.Income);
+    facade.CreateCategory("Ресторан", CategoryType.Expense);
 }

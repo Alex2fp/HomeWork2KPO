@@ -58,23 +58,28 @@ public abstract class FinanceDataImporter
     protected virtual FinanceDataSnapshot CreateSnapshot(RawFinanceData data)
     {
         var accountMap = new Dictionary<string, BankAccount>(StringComparer.OrdinalIgnoreCase);
+        var nextAccountId = 0;
         foreach (var account in data.Accounts)
         {
-            accountMap[account.Name.Trim()] = new BankAccount(Guid.NewGuid(), account.Name, account.Currency);
+            var entity = new BankAccount(nextAccountId++, account.Name, account.Currency);
+            accountMap[account.Name.Trim()] = entity;
         }
 
         var categoryMap = new Dictionary<string, Category>(StringComparer.OrdinalIgnoreCase);
+        var nextCategoryId = 0;
         foreach (var category in data.Categories)
         {
-            categoryMap[category.Name.Trim()] = new Category(Guid.NewGuid(), category.Name, category.Type);
+            var entity = new Category(nextCategoryId++, category.Name, category.Type);
+            categoryMap[category.Name.Trim()] = entity;
         }
 
         var operations = new List<Operation>();
-        foreach (var operation in data.Operations)
+        var nextOperationId = 0;
+        foreach (var operation in data.Operations.OrderBy(o => o.Date))
         {
             var account = accountMap[operation.AccountName.Trim()];
             var category = categoryMap[operation.CategoryName.Trim()];
-            var op = new Operation(Guid.NewGuid(), account.Id, category.Id, operation.Type, operation.Amount, operation.Date, operation.Description ?? string.Empty);
+            var op = new Operation(nextOperationId++, account.Id, category.Id, operation.Type, operation.Amount, operation.Date, operation.Description ?? string.Empty);
             operations.Add(op);
             account.RegisterOperation(op);
         }

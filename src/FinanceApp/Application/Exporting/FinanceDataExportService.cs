@@ -1,11 +1,13 @@
 using System;
+using System.IO;
+using System.Text;
 using FinanceApp.Application.Repositories;
 
 namespace FinanceApp.Application.Exporting;
 
 public interface IFinanceDataExportService
 {
-    string Export(string format);
+    void ExportToFile(string path);
 }
 
 public class FinanceDataExportService : IFinanceDataExportService
@@ -17,8 +19,9 @@ public class FinanceDataExportService : IFinanceDataExportService
         _repository = repository;
     }
 
-    public string Export(string format)
+    public void ExportToFile(string path)
     {
+        var format = GetFormatFromPath(path);
         var visitor = CreateVisitor(format);
 
         foreach (var account in _repository.GetAccounts())
@@ -36,7 +39,14 @@ public class FinanceDataExportService : IFinanceDataExportService
             visitor.VisitOperation(operation);
         }
 
-        return visitor.Build();
+        var content = visitor.Build();
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(path, content, Encoding.UTF8);
     }
 
     private CollectingExportVisitor CreateVisitor(string format) => format.ToLowerInvariant() switch
@@ -46,4 +56,24 @@ public class FinanceDataExportService : IFinanceDataExportService
         "yaml" => new YamlExportVisitor(),
         _ => throw new NotSupportedException($"Format '{format}' is not supported")
     };
+
+    private static string GetFormatFromPath(string path)
+    {
+        var extension = Path.GetExtension(path);
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            throw new NotSupportedException("Не удалось определить формат файла");
+        }
+
+        var format = extension.TrimStart('.').ToLowerInvariant();
+        return format switch
+        {
+            "csv" => "csv",
+            "json" => "json",
+            "jsony" => "json",
+            "yaml" => "yaml",
+            "yml" => "yaml",
+            _ => throw new NotSupportedException($"Формат '{extension}' не поддерживается")
+        };
+    }
 }

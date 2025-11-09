@@ -4,7 +4,7 @@ namespace FinanceApp.Application.Analytics;
 
 public interface IAnalyticsService
 {
-    AccountBalanceSummary GetAccountBalance(Guid accountId);
-    IncomeExpenseSummary GetIncomeExpense(Guid accountId, DateOnly? from = null, DateOnly? to = null);
-    IReadOnlyCollection<CategoryTotal> GetTotalsByCategory(Guid accountId, DateOnly? from = null, DateOnly? to = null);
+    AccountBalanceSummary GetAccountBalance(int accountId);
+    IncomeExpenseSummary GetIncomeExpense(int accountId, DateOnly? from = null, DateOnly? to = null);
+    IReadOnlyCollection<CategoryTotal> GetTotalsByCategory(int accountId, DateOnly? from = null, DateOnly? to = null);
 }

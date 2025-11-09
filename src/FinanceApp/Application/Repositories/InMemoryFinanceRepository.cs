@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FinanceApp.Application.Data;
@@ -7,16 +8,19 @@ namespace FinanceApp.Application.Repositories;
 
 public class InMemoryFinanceRepository : IFinanceRepository
 {
-    private readonly Dictionary<Guid, BankAccount> _accounts = new();
-    private readonly Dictionary<Guid, Category> _categories = new();
-    private readonly Dictionary<Guid, Operation> _operations = new();
+    private readonly Dictionary<int, BankAccount> _accounts = new();
+    private readonly Dictionary<int, Category> _categories = new();
+    private readonly Dictionary<int, Operation> _operations = new();
+    private int _nextAccountId;
+    private int _nextCategoryId;
+    private int _nextOperationId;
 
     public IReadOnlyCollection<BankAccount> GetAccounts() => _accounts.Values
         .OrderBy(a => a.Name)
         .Select(a => a.Clone())
         .ToArray();
 
-    public BankAccount GetAccount(Guid id)
+    public BankAccount GetAccount(int id)
     {
         if (!_accounts.TryGetValue(id, out var account))
         {
@@ -29,19 +33,19 @@ public class InMemoryFinanceRepository : IFinanceRepository
     public BankAccount AddAccount(string name, string currency)
     {
         EnsureUniqueAccountName(name);
-        var account = new BankAccount(Guid.NewGuid(), name, currency);
+        var account = new BankAccount(_nextAccountId++, name, currency);
         _accounts.Add(account.Id, account);
         return account.Clone();
     }
 
-    public void RenameAccount(Guid id, string newName)
+    public void RenameAccount(int id, string newName)
     {
         EnsureUniqueAccountName(newName, id);
         var account = GetInternalAccount(id);
         account.Rename(newName);
     }
 
-    public void RemoveAccount(Guid id)
+    public void RemoveAccount(int id)
     {
         if (!_accounts.Remove(id))
         {
@@ -59,7 +63,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         .Select(CloneCategory)
         .ToArray();
 
-    public Category GetCategory(Guid id)
+    public Category GetCategory(int id)
     {
         if (!_categories.TryGetValue(id, out var category))
         {
@@ -72,12 +76,12 @@ public class InMemoryFinanceRepository : IFinanceRepository
     public Category AddCategory(string name, CategoryType type)
     {
         EnsureUniqueCategoryName(name);
-        var category = new Category(Guid.NewGuid(), name, type);
+        var category = new Category(_nextCategoryId++, name, type);
         _categories.Add(category.Id, category);
         return CloneCategory(category);
     }
 
-    public void UpdateCategory(Guid id, string name, CategoryType type)
+    public void UpdateCategory(int id, string name, CategoryType type)
     {
         EnsureUniqueCategoryName(name, id);
         var category = GetInternalCategory(id);
@@ -85,7 +89,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         category.ChangeType(type);
     }
 
-    public void RemoveCategory(Guid id)
+    public void RemoveCategory(int id)
     {
         if (!_categories.Remove(id))
         {
@@ -104,26 +108,26 @@ public class InMemoryFinanceRepository : IFinanceRepository
         .Select(CloneOperation)
         .ToArray();
 
-    public IReadOnlyCollection<Operation> GetOperationsForAccount(Guid accountId) => _operations.Values
+    public IReadOnlyCollection<Operation> GetOperationsForAccount(int accountId) => _operations.Values
         .Where(o => o.AccountId == accountId)
         .OrderBy(o => o.Date)
         .Select(CloneOperation)
         .ToArray();
 
-    public Operation AddOperation(Guid accountId, Guid categoryId, OperationType type, decimal amount, DateOnly date, string description)
+    public Operation AddOperation(int accountId, int categoryId, OperationType type, decimal amount, DateOnly date, string description)
     {
         var account = GetInternalAccount(accountId);
         var category = GetInternalCategory(categoryId);
 
         ValidateCategoryCompatibility(type, category);
 
-        var operation = new Operation(Guid.NewGuid(), accountId, categoryId, type, amount, date, description);
+        var operation = new Operation(_nextOperationId++, accountId, categoryId, type, amount, date, description);
         _operations.Add(operation.Id, operation);
         account.RegisterOperation(operation);
         return CloneOperation(operation);
     }
 
-    public void RemoveOperation(Guid operationId)
+    public void RemoveOperation(int operationId)
     {
         if (!_operations.TryGetValue(operationId, out var operation))
         {
@@ -135,7 +139,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         _operations.Remove(operationId);
     }
 
-    public void ResetAccountOperations(Guid accountId)
+    public void ResetAccountOperations(int accountId)
     {
         var account = GetInternalAccount(accountId);
         account.ResetOperations();
@@ -152,15 +156,20 @@ public class InMemoryFinanceRepository : IFinanceRepository
         _accounts.Clear();
         _categories.Clear();
         _operations.Clear();
+        _nextAccountId = 0;
+        _nextCategoryId = 0;
+        _nextOperationId = 0;
 
         foreach (var account in snapshot.Accounts)
         {
             _accounts[account.Id] = new BankAccount(account.Id, account.Name, account.Currency);
+            _nextAccountId = Math.Max(_nextAccountId, account.Id + 1);
         }
 
         foreach (var category in snapshot.Categories)
         {
             _categories[category.Id] = new Category(category.Id, category.Name, category.Type);
+            _nextCategoryId = Math.Max(_nextCategoryId, category.Id + 1);
         }
 
         foreach (var operation in snapshot.Operations.OrderBy(o => o.Date))
@@ -169,10 +178,11 @@ public class InMemoryFinanceRepository : IFinanceRepository
             _operations[op.Id] = op;
             var account = GetInternalAccount(op.AccountId);
             account.RegisterOperation(op);
+            _nextOperationId = Math.Max(_nextOperationId, operation.Id + 1);
         }
     }
 
-    private BankAccount GetInternalAccount(Guid id)
+    private BankAccount GetInternalAccount(int id)
     {
         if (!_accounts.TryGetValue(id, out var account))
         {
@@ -182,7 +192,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         return account;
     }
 
-    private Category GetInternalCategory(Guid id)
+    private Category GetInternalCategory(int id)
     {
         if (!_categories.TryGetValue(id, out var category))
         {
@@ -194,11 +204,6 @@ public class InMemoryFinanceRepository : IFinanceRepository
 
     private static void ValidateCategoryCompatibility(OperationType type, Category category)
     {
-        if (category.Type == CategoryType.Universal)
-        {
-            return;
-        }
-
         if ((type == OperationType.Income && category.Type != CategoryType.Income) ||
             (type == OperationType.Expense && category.Type != CategoryType.Expense))
         {
@@ -206,7 +211,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         }
     }
 
-    private void EnsureUniqueAccountName(string name, Guid? id = null)
+    private void EnsureUniqueAccountName(string name, int? id = null)
     {
         var normalized = name.Trim().ToUpperInvariant();
         if (_accounts.Values.Any(a => a.Name.Trim().ToUpperInvariant() == normalized && a.Id != id))
@@ -215,7 +220,7 @@ public class InMemoryFinanceRepository : IFinanceRepository
         }
     }
 
-    private void EnsureUniqueCategoryName(string name, Guid? id = null)
+    private void EnsureUniqueCategoryName(string name, int? id = null)
     {
         var normalized = name.Trim().ToUpperInvariant();
         if (_categories.Values.Any(c => c.Name.Trim().ToUpperInvariant() == normalized && c.Id != id))

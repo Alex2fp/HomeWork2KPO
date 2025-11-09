@@ -32,7 +32,7 @@ public class YamlExportVisitor : CollectingExportVisitor
             builder.AppendLine("    category: " + GetCategoryName(operation.CategoryId));
             builder.AppendLine("    type: " + operation.Type);
             builder.AppendLine("    amount: " + operation.Amount.ToString(CultureInfo.InvariantCulture));
-            builder.AppendLine("    date: " + operation.Date.ToString("yyyy-MM-dd"));
+            builder.AppendLine("    date: " + operation.Date.ToString("dd-MM-yyyy"));
             if (!string.IsNullOrWhiteSpace(operation.Description))
             {
                 builder.AppendLine("    description: \"" + operation.Description.Replace("\"", "\\\"") + "\"");
@@ -42,7 +42,7 @@ public class YamlExportVisitor : CollectingExportVisitor
         return builder.ToString();
     }
 
-    private string GetAccountName(Guid accountId) => Accounts.First(a => a.Id == accountId).Name;
+    private string GetAccountName(int accountId) => Accounts.First(a => a.Id == accountId).Name;
 
-    private string GetCategoryName(Guid categoryId) => Categories.First(c => c.Id == categoryId).Name;
+    private string GetCategoryName(int categoryId) => Categories.First(c => c.Id == categoryId).Name;
 }

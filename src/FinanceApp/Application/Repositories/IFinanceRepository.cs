@@ -6,22 +6,22 @@ namespace FinanceApp.Application.Repositories;
 public interface IFinanceRepository
 {
     IReadOnlyCollection<BankAccount> GetAccounts();
-    BankAccount GetAccount(Guid id);
+    BankAccount GetAccount(int id);
     BankAccount AddAccount(string name, string currency);
-    void RenameAccount(Guid id, string newName);
-    void RemoveAccount(Guid id);
+    void RenameAccount(int id, string newName);
+    void RemoveAccount(int id);
 
     IReadOnlyCollection<Category> GetCategories();
-    Category GetCategory(Guid id);
+    Category GetCategory(int id);
     Category AddCategory(string name, CategoryType type);
-    void UpdateCategory(Guid id, string name, CategoryType type);
-    void RemoveCategory(Guid id);
+    void UpdateCategory(int id, string name, CategoryType type);
+    void RemoveCategory(int id);
 
     IReadOnlyCollection<Operation> GetOperations();
-    IReadOnlyCollection<Operation> GetOperationsForAccount(Guid accountId);
-    Operation AddOperation(Guid accountId, Guid categoryId, OperationType type, decimal amount, DateOnly date, string description);
-    void RemoveOperation(Guid operationId);
+    IReadOnlyCollection<Operation> GetOperationsForAccount(int accountId);
+    Operation AddOperation(int accountId, int categoryId, OperationType type, decimal amount, DateOnly date, string description);
+    void RemoveOperation(int operationId);
 
-    void ResetAccountOperations(Guid accountId);
+    void ResetAccountOperations(int accountId);
     void ReplaceWithSnapshot(FinanceDataSnapshot snapshot);
 }

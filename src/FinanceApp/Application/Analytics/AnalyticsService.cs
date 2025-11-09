@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using FinanceApp.Application.Repositories;
 using FinanceApp.Domain;
 
@@ -12,13 +14,13 @@ public class AnalyticsService : IAnalyticsService
         _repository = repository;
     }
 
-    public AccountBalanceSummary GetAccountBalance(Guid accountId)
+    public AccountBalanceSummary GetAccountBalance(int accountId)
     {
         var account = _repository.GetAccount(accountId);
         return new AccountBalanceSummary(account.Id, account.Name, account.Balance);
     }
 
-    public IncomeExpenseSummary GetIncomeExpense(Guid accountId, DateOnly? from = null, DateOnly? to = null)
+    public IncomeExpenseSummary GetIncomeExpense(int accountId, DateOnly? from = null, DateOnly? to = null)
     {
         var operations = FilterOperations(accountId, from, to);
         var income = operations.Where(o => o.Type == OperationType.Income).Sum(o => o.Amount);
@@ -26,7 +28,7 @@ public class AnalyticsService : IAnalyticsService
         return new IncomeExpenseSummary(income, expense);
     }
 
-    public IReadOnlyCollection<CategoryTotal> GetTotalsByCategory(Guid accountId, DateOnly? from = null, DateOnly? to = null)
+    public IReadOnlyCollection<CategoryTotal> GetTotalsByCategory(int accountId, DateOnly? from = null, DateOnly? to = null)
     {
         var operations = FilterOperations(accountId, from, to);
         var categories = _repository.GetCategories().ToDictionary(c => c.Id);
@@ -43,7 +45,7 @@ public class AnalyticsService : IAnalyticsService
             .ToArray();
     }
 
-    private IEnumerable<Operation> FilterOperations(Guid accountId, DateOnly? from, DateOnly? to)
+    private IEnumerable<Operation> FilterOperations(int accountId, DateOnly? from, DateOnly? to)
     {
         return _repository.GetOperationsForAccount(accountId)
             .Where(o => (!from.HasValue || o.Date >= from) && (!to.HasValue || o.Date <= to));

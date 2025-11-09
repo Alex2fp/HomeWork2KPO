@@ -5,14 +5,14 @@ namespace FinanceApp.Domain;
 
 public class BankAccount : IExportable
 {
-    private readonly List<Guid> _operationIds;
+    private readonly List<int> _operationIds;
 
-    public BankAccount(Guid id, string name, string currency)
-        : this(id, name, currency, 0m, Enumerable.Empty<Guid>())
+    public BankAccount(int id, string name, string currency)
+        : this(id, name, currency, 0m, Enumerable.Empty<int>())
     {
     }
 
-    internal BankAccount(Guid id, string name, string currency, decimal balance, IEnumerable<Guid> operationIds)
+    internal BankAccount(int id, string name, string currency, decimal balance, IEnumerable<int> operationIds)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -31,11 +31,11 @@ public class BankAccount : IExportable
         _operationIds = operationIds.ToList();
     }
 
-    public Guid Id { get; }
+    public int Id { get; }
     public string Name { get; private set; }
     public string Currency { get; }
     public decimal Balance { get; private set; }
-    public IReadOnlyCollection<Guid> OperationIds => _operationIds.AsReadOnly();
+    public IReadOnlyCollection<int> OperationIds => _operationIds.AsReadOnly();
 
     public void Rename(string newName)
     {
